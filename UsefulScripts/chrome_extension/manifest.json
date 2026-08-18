@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Research PDF Bulk Downloader",
+  "version": "1.0",
+  "description": "Bulk-downloads PDFs from a CSV of paper links, reusing your logged-in browser sessions (IEEE, Wiley, ACM, MDPI, etc).",
+  "permissions": ["downloads"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

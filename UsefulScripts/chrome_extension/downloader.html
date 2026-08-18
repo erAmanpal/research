@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Research PDF Bulk Downloader</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 20px; }
+  h1 { font-size: 20px; }
+  h3 { font-size: 15px; }
+  .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  button { padding: 8px 16px; font-size: 14px; cursor: pointer; margin-right: 8px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .status-success { color: #1a7f37; font-weight: 600; }
+  .status-failed { color: #c0392b; }
+  .status-manual { color: #a15c00; font-weight: 600; }
+  .status-pending { color: #888; }
+  #summary { font-size: 14px; margin-top: 10px; }
+  code { background: #f4f4f4; padding: 1px 5px; border-radius: 4px; }
+  #ieeeLinks a { display: block; padding: 8px 10px; margin-bottom: 6px; background: #fff6e6; border: 1px solid #f0d9a6;
+                 border-radius: 6px; text-decoration: none; color: #333; font-size: 13px; }
+  #ieeeLinks a:hover { background: #ffecc7; }
+  #ieeeLinks a.clicked { opacity: 0.5; }
+  #ieeeLinks small { color: #888; display: block; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <h1>Research PDF Bulk Downloader</h1>
+
+  <div class="box">
+    <p>Upload <code>extracted_pdf_links.csv</code> (columns: <code>paper_id, title, source_column, url</code>)
+       or the original <code>scholar_found_urls.csv</code> (columns include <code>direct_pdf_links, mdpi_links</code>).</p>
+    <input type="file" id="csvFile" accept=".csv">
+    <br><br>
+    <button id="startBtn" disabled>Start Downloading</button>
+    <button id="pauseBtn" disabled>Pause</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="exportBtn" disabled>Export Report CSV</button>
+    <div id="summary"></div>
+  </div>
+
+  <div class="box" id="ieeeBox" style="display:none;">
+    <h3 style="margin-top:0;">IEEE links - click to download</h3>
+    <p style="font-size:13px; color:#555; margin-top:0;">
+      IEEE's access check requires a real, human-initiated click - no extension, script, or automated navigation
+      can produce that signal (confirmed by testing; this is intentional anti-automation protection, not a bug
+      to fix). Everything else on this page downloads automatically. These links are already resolved to the
+      correct working <code>stamp.jsp</code> format and matched to a <code>paper_id</code>-based filename - just
+      click down the list. Each opens in a new tab and should download immediately if you have real IEEE access
+      from this network.
+    </p>
+    <div id="ieeeLinks"></div>
+  </div>
+
+  <div class="box">
+    <table id="resultsTable">
+      <thead>
+        <tr><th>#</th><th>paper_id</th><th>title</th><th>URL attempted</th><th>Status</th></tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <script src="downloader.js"></script>
+</body>
+</html>
