@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Scopus Research PDF Downloader</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 980px; margin: 30px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 20px; }
+  h3 { font-size: 15px; margin-bottom: 6px; }
+  .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  button { padding: 8px 16px; font-size: 14px; cursor: pointer; margin-right: 8px; border-radius: 6px; border: 1px solid #ccc; background: #fafafa; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+  input[type=text], input[type=email], select { padding: 6px 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 5px; }
+  label { font-size: 13px; display: block; margin-bottom: 4px; color: #444; }
+  .row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; }
+  .field { min-width: 200px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .status-success { color: #1a7f37; font-weight: 600; }
+  .status-failed { color: #c0392b; }
+  .status-manual { color: #a15c00; font-weight: 600; }
+  .status-pending { color: #888; }
+  .status-skip { color: #888; font-style: italic; }
+  #summary { font-size: 14px; margin-top: 10px; white-space: pre-line; }
+  code { background: #f4f4f4; padding: 1px 5px; border-radius: 4px; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; background: #eef; margin-left: 4px; }
+  #manualBox { display: none; }
+  #manualBox .note { font-size: 13px; color: #555; }
+  #manualBody a.open-link { color: #2563eb; text-decoration: none; }
+  #manualBody a.open-link:hover { text-decoration: underline; }
+  .copy-btn { font-size: 11px; padding: 2px 6px; margin-left: 6px; }
+  #resumeBox { display: none; background: #fff6e6; border-color: #f0d9a6; }
+  progress { width: 100%; height: 10px; }
+  .small { font-size: 12px; color: #777; }
+</style>
+</head>
+<body>
+  <h1>Scopus Research PDF Downloader</h1>
+  <p class="small">
+    Everything runs inside this extension: no external server, no Python, no separate scripts.
+    Open-access copies (Unpaywall, OpenAlex, and any direct open-access DOI link) download
+    automatically into source-named folders. Anything restricted is placed in the
+    <b>Manual Download</b> list below for you to fetch by hand, exactly like the IEEE
+    click-through list in the original sample extension.
+  </p>
+
+  <div class="box" id="resumeBox">
+    <p><b>A previous session was found.</b> <span id="resumeInfo"></span></p>
+    <button id="resumeBtn" class="primary">Resume</button>
+    <button id="discardBtn">Discard &amp; start fresh</button>
+  </div>
+
+  <div class="box">
+    <h3>1. Settings</h3>
+    <div class="row">
+      <div class="field">
+        <label for="emailInput">Your email (required by Unpaywall's API terms)</label>
+        <input type="email" id="emailInput" placeholder="you@example.com" style="width: 240px;">
+      </div>
+    </div>
+
+    <h3>2. Upload your Scopus export</h3>
+    <p class="small">.xlsx, .xls, or .csv — needs a DOI column and a serial-number column (e.g. "S.No").</p>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    <div class="row" id="mappingRow" style="display:none; margin-top:10px;">
+      <div class="field">
+        <label for="colSno">Serial number column</label>
+        <select id="colSno"></select>
+      </div>
+      <div class="field">
+        <label for="colDoi">DOI column</label>
+        <select id="colDoi"></select>
+      </div>
+      <div class="field">
+        <label for="colTitle">Title column</label>
+        <select id="colTitle"></select>
+      </div>
+    </div>
+
+    <h3 style="margin-top:16px;">3. Run</h3>
+    <button id="startBtn" class="primary" disabled>Start Downloading</button>
+    <button id="pauseBtn" disabled>Pause</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="exportBtn" disabled>Export Full Report CSV</button>
+    <progress id="progressBar" value="0" max="100" style="display:none; margin-top:10px;"></progress>
+    <div id="summary"></div>
+  </div>
+
+  <div class="box" id="manualBox">
+    <h3>Manual Download List <span class="pill" id="manualCount">0</span></h3>
+    <p class="note">
+      These DOIs had no legally open-access copy found by Unpaywall, OpenAlex, or a direct check.
+      They're likely paywalled. Click "Open article" to view/download using your own institutional
+      or subscription login in a normal browser tab — this extension never attempts to bypass a
+      paywall or login wall. Use the suggested filename so it matches the naming convention when
+      you save it manually into <code>Downloads/ScopusPDFs/Manual/</code>.
+    </p>
+    <button id="exportManualBtn" disabled>Export Manual List CSV</button>
+    <table id="manualTable">
+      <thead>
+        <tr><th>#</th><th>S.No</th><th>Title</th><th>DOI</th><th>Article</th><th>Suggested filename</th><th>Done</th></tr>
+      </thead>
+      <tbody id="manualBody"></tbody>
+    </table>
+  </div>
+
+  <div class="box">
+    <table id="resultsTable">
+      <thead>
+        <tr><th>#</th><th>S.No</th><th>Title</th><th>DOI</th><th>Source</th><th>Status</th></tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="downloader.js"></script>
+</body>
+</html>

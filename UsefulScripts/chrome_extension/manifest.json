@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Scopus Research PDF Downloader",
+  "version": "1.0",
+  "description": "Upload a Scopus export, auto-download open-access PDFs into source-named folders, and get a click-through list for anything restricted.",
+  "permissions": ["downloads", "storage", "unlimitedStorage"],
+  "host_permissions": [
+    "https://api.unpaywall.org/*",
+    "https://api.openalex.org/*",
+    "https://doi.org/*",
+    "https://*.doi.org/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
